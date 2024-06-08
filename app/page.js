@@ -23,7 +23,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-lg w-full p-6 bg-white rounded-lg shadow-lg">
+      <div className="max-w-l5 w-full p-6 bg-white rounded-lg shadow-lg">
         <h1 className="text-4xl font-bold text-center text-blue-600 mb-6">Codeforces Dashboard</h1>
         <form onSubmit={handleSubmit} className="text-center">
           <div className="flex items-center justify-center mb-4">

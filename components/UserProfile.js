@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Pie } from 'react-chartjs-2';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart as ChartJS,LineElement,  ArcElement, BarElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, TimeScale } from 'chart.js';
 import ReactCountryFlag from "react-country-flag"
 import { getUserInfo, getUserRating, getUserStatus, getProblemset } from '../lib/codeforces';
+import 'chartjs-adapter-date-fns';
 
 import Swal from 'sweetalert2'
 
-ChartJS.register(BarElement,ArcElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(BarElement,LineElement, ArcElement, CategoryScale, LinearScale,PointElement, Tooltip, Legend, TimeScale);
 
 const UserProfile = ({ handle }) => {
   const [profile, setProfile] = useState(null);
@@ -22,6 +23,9 @@ const UserProfile = ({ handle }) => {
   const [recommendedProblems, setRecommendedProblems] = useState([]);
   const [problems, setProblems] = useState([]);
 const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
+const [solvedProblemIds, setsolvedProblemIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -114,31 +118,30 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
     });
     setProblemsByDifficulty(problemsByDifficulty);
         if (userInfo) {
-          const solvedProblemIds = new Set(userStatus.filter(sub => sub.verdict === 'OK').map(sub => sub.problem.contestId + sub.problem.index));
-          const userRating = profile?.rating || 0; // Ensure userRating is defined
-  
+          const SSI = new Set(userStatus.filter(sub => sub.verdict === 'OK').map(sub => sub.problem.contestId + sub.problem.index));
+          setsolvedProblemIds(SSI);
+          console.log(SSI)
+          const userRating = profile?.rating;
           // Fetch problemset
           const { problems } = await getProblemset({ tags: '' }); // Adjust tags as needed
   
           // Filter recommended problems
           console.log('Problems:', problems);
           setProblems(problems);
-          const recommended = problems.filter(problem => {
-            const problemId = problem.contestId + problem.index;
-            return (
-              !solvedProblemIds.has(problemId) &&
-              problem.rating >= userRating &&
-              problem.rating <= userRating + 200
-            );
-          });
-  
-          console.log('Recommended Problems:', recommended);
-          setRecommendedProblems(recommended);
+          const recommendedProblems = problems
+            .filter(problem => problem.rating >= userRating && problem.rating <= userRating + 200)
+            .filter(problem => !SSI.has(problem.contestId + problem.index))
+            .slice(0, 20);
+
+          setRecommendedProblems(recommendedProblems);
         }
         
         
       } catch (error) {
         console.error('Error fetching data:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -173,6 +176,100 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
       },
     ],
   };
+
+  const linedata = {
+    labels: ratings.map(item => new Date(item.ratingUpdateTimeSeconds * 1000)),
+    datasets: [
+      {
+        label: 'Rating',
+        data: ratings.map(item => item.newRating),
+        borderColor: 'rgba(0, 0, 0, 0.6)',
+        borderWidth: 1,
+        pointBackgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)', // Initial background color
+      },
+    ],
+  };
+
+  const  lineoptions = {
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'month',
+        },
+        ticks: {
+          display: true, // Hide x-axis ticks
+        },
+        grid: {
+          display: false, // Hide x-axis grid lines
+        },
+      },
+      y: {
+        beginAtZero: false,
+        min: 0,
+        max: (Math.ceil((profile?.rating + 200)/100))*100,
+      },
+    },
+    plugins: {
+      customBackgroundColor: {
+        id: 'customBackgroundColor',
+        beforeDraw: (chart) => {
+          const { ctx, chartArea: { top, bottom }, scales: { y } } = chart;
+          const gradient = ctx.createLinearGradient(0, top, 0, bottom);
+
+          const colors = [
+            { stop: 0.25, color: 'rgba(23, 99, 100, 0.2)' }, // Red for low ratings
+            { stop: 0.5, color: 'rgba(255, 205, 86, 0.2)' }, // Yellow for medium ratings
+            { stop: 0.75, color: 'rgba(75, 192, 192, 0.2)' }, // Green for high ratings
+            { stop: 1, color: 'rgba(54, 162, 235, 0.2)' }, // Blue for very high ratings
+          ];
+
+          colors.forEach(({ stop, color }) => {
+            gradient.addColorStop(stop, color);
+          });
+
+          ctx.save();
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, top, chart.width, bottom - top);
+          ctx.restore();
+        },
+      },
+    },
+  };
+
+  const options = {
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+    plugins: {
+      customBackgroundColor: {
+        id: 'customBackgroundColor',
+        beforeDraw: (chart) => {
+          const { ctx, chartArea: { top, bottom }, scales: { y } } = chart;
+          const gradient = ctx.createLinearGradient(0, top, 0, bottom);
+
+          const colors = [
+            { stop: 0.25, color: 'rgba(255, 99, 132, 0.8)' }, // Red for low ratings
+            { stop: 0.5, color: 'rgba(255, 205, 86, 0.8)' }, // Yellow for medium ratings
+            { stop: 0.75, color: 'rgba(75, 192, 192, 0.8)' }, // Green for high ratings
+            { stop: 1, color: 'rgba(54, 162, 235, 0.8)' }, // Blue for very high ratings
+          ];
+
+          colors.forEach(({ stop, color }) => {
+            gradient.addColorStop(stop, color);
+          });
+
+          ctx.save();
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, top, chart.width, bottom - top);
+          ctx.restore();
+        },
+      },
+    },
+  };
   const difficultyLabels = Object.keys(problemsByDifficulty).sort((a, b) => a - b);
   const difficultyData = difficultyLabels.map(label => problemsByDifficulty[label]);
   
@@ -193,22 +290,28 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
       },
     ],
   };
+  console.log(ratings);
   
-  const options = {
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+  // const options = {
+  //   scales: {
+  //     y: {
+  //       beginAtZero: true,
+  //     },
+  //   },
+  // };
   
+  if (loading) return <div className="text-center mt-8">Loading...</div>;
+  if (error) return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
+
   if (!profile) return <div className="text-center mt-8">Profile not found!</div>;
 
   return (
-    <div className="mx-auto max-w-md p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-3xl font-bold mb-4 text-blue-600">
+    <div className="mx-auto max-w-xl p-6 bg-white rounded-lg shadow-lg">
+        <h2 className="text-4xl font-bold mb-4 text-blue-600 text-center">
         <a href={`https://codeforces.com/profile/${profile.handle}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">{profile.handle}</a>
       </h2>
+        <img src={profile.titlePhoto} alt={`{profile.handle}'s profile photo`} className="w-20 h-20 rounded-full" />
+
       <div className="text-3xl flex gap-4 font-bold mb-4 text-blue-600">
        <div className='my-auto'>
        {profile.firstName != undefined ? ` ${profile.firstName}` : ''}
@@ -219,11 +322,11 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
         <ReactCountryFlag
                 countryCode={`${lookup.byCountry(`${profile.country}`).fips}`}
                 svg
-                style={{
-                    width: '2em',
-                    height: '2em',
-                }}
-                title="US"
+                // style={{
+                //     width: '2em',
+                //     height: '2em',
+                // }}
+                title={`${lookup.byCountry(`${profile.country}`).fips}`}
             />
       )}
        </div>
@@ -236,25 +339,37 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
         <strong className="text-lg text-gray-700">Rank:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.rating)} rounded-md`}>{profile.rank}</span>
       </p>
       <p className="mb-4">
-        <strong className="text-lg text-gray-700">Max Rating:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.maxRating)} rounded-md`}>{profile.maxRating}</span>
+        <strong className="text-lg text-gray-700">Max Rating:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.maxRating)} rounded-md`}><strong>{profile.maxRating}{` (${getRank(profile.maxRating)}) `}</strong></span>
       </p>
-  
+      <p className="text-gray-600">
+            Friends: <span className="font-bold">{profile.friendOfCount}</span>
+          </p>
+          <p className="text-gray-600">
+            Contribution: <span className="font-bold">{profile.contribution}</span>
+          </p>
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Contests Participated ({ratings.length})</h3>
+        <h2 className="text-2xl font-bold mb-2 text-blue-600">Contests Participated ({ratings.length})</h2>
         <table className="min-w-full">
           <thead>
             <tr className="bg-blue-100">
-              <th className="px-4 py-2 text-left">Contest Name</th>
-              <th className="px-4 py-2 text-left">Rating</th>
+            <th className="px-4 py-2 text-left text-md">#</th>
+              <th className="px-4 py-2 text-left text-md">Contest Name</th>
+              <th className="px-4 py-2 text-left text-md">Rating</th>
             </tr>
           </thead>
           <tbody>
             {ratings.map((rating, index) => (
+              
               <tr key={index} className="bg-white border-b">
+              <td className="px-4 py-2">
+                  {ratings.length -index}. 
+                  </td>
                 <td className="px-4 py-2">
                   <a href={`https://codeforces.com/contest/${rating.contestId}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">{rating.contestName}</a>
                 </td>
-                <td className={`px-4 py-2 ${getRatingColor(rating.newRating)}`}>{rating.newRating}</td>
+                <td className={`px-2 text-center py-2 min-w-xl ${getDeltaColor(rating.newRating-rating.oldRating)}`}><strong>{rating.newRating}
+                {rating.newRating - rating.oldRating > 0 ? ` (+${rating.newRating - rating.oldRating})`: ` (${rating.newRating - rating.oldRating})`}
+                </strong></td>
               </tr>
             ))}
           </tbody>
@@ -262,76 +377,52 @@ const [problemsByDifficulty, setProblemsByDifficulty] = useState([]);
       </div>
   
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Recent Submissions</h3>
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">Recent Submissions</h2>
         <ul className="space-y-2">
           {submissions.slice(0, 10).map((submission, index) => (
             <li key={index} className={`p-2 rounded-lg ${getSubmissionClass(submission.verdict)}`}>
-              <strong className="text-base">{submission.problem.name}:</strong> {submission.verdict}
+            <a href={`https://codeforces.com/problemset/problem/${submission.problem.contestId}/${submission.problem.index}`} target="_blank" rel="noopener noreferrer" className="text-blue-600"> {submission.problem.name} : </a>
+            <strong className={`${getSubmissionResultColor(submission.verdict)}`}>{getSubmissionResult(submission.verdict)}</strong>
             </li>
           ))}
         </ul>
       </div>
   
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">User Statistics Overview</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="font-semibold">Total Problems Solved</p>
-            <p>{totalProblemsSolved}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="font-semibold">Total Submissions</p>
-            <p>{metrics.totalSubmissions}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="font-semibold">Success Rate</p>
-            <p>{metrics.successRate}%</p>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Problem Difficulty Distribution</h3>
-        <ul>
-          {Object.keys(difficultyDistribution).map((difficulty, index) => (
-            <li key={index}>
-              Difficulty {difficulty}: {difficultyDistribution[difficulty]}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Problems Solved by Category</h3>
-        <Pie data={pieData} />
+      <div className="bg-blue-50 p-4 rounded-lg mt-6">
+        <h3 className="text-2xl font-bold mb-4 text-blue-600">Stats</h3>
+        <p className="text-gray-600">Total Problems Solved: {totalProblemsSolved}</p>
+        <p className="text-gray-600">Success Rate: {metrics.successRate}%</p>
+        <p className="text-gray-600">Total Submissions: {metrics.totalSubmissions}</p>
+        <p className="text-gray-600">Current Streak: {metrics.currentStreak} days</p>
+        <p className="text-gray-600">Longest Streak: {metrics.longestStreak} days</p>
       </div>
       
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Recommended Problems</h3>
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">Problems Solved by Category</h2>
+        <Pie data={pieData} />
+      </div>
+      <div className='mt-10'>
+      <h2 className="text-2xl font-bold mb-4 text-blue-600">Ratings Over Time</h2>
+      <Line data={linedata} options={lineoptions} plugins={[lineoptions.plugins.customBackgroundColor]} />
+    </div>
+      <div className="mt-6">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">Recommended Problems</h2>
         <ul>
-          {problems.length > 0 ? (
-            problems.slice(0, 40).map((problem, index) => (
-              <li key={index}>
-                <a href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">
-                {problem.name} {problem.rating > 0 ? `: ${problem.rating}` : ''}
-                </a>
-              </li>
-            ))
-          ) : (
-            <p>No recommended problems found.</p>
-          )}
-        </ul>
+  {problems
+    .filter(problem => problem.rating >= profile.rating && problem.rating <= profile.rating + 200)
+    .slice(0, 10)
+    .map((problem, index) => (
+      <li key={index} className='mb-2 text-md'>
+      <a href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`} target="_blank" rel="noopener noreferrer" className="text-teal-700"> 
+        {problem.name} {problem.rating && `: ${problem.rating}`}
+        </a>
+      </li>
+    ))}
+</ul>
       </div>
 
-      {metrics.currentStreak !== undefined && metrics.longestStreak !== undefined && (
-  <div className="mt-6">
-    <h3 className="text-lg font-semibold mb-2">Streak Tracker</h3>
-    <p>Current Streak: {metrics.currentStreak} {metrics.currentStreak > 1 ? 'days' : 'day'}</p>
-    <p>Longest Streak: {metrics.longestStreak} {metrics.longestStreak > 1 ? 'days' : 'day'}</p>
-  </div>
-  
-)}
-
 <div className="mt-6">
-  <h3 className="text-lg font-semibold mb-2">Solved Problems by Difficulty</h3>
+  <h2 className="text-2xl font-bold mb-4 text-blue-600">Solved Problems by Difficulty</h2>
   <Bar data={data} options={options} />
 </div>
 
@@ -355,6 +446,28 @@ const getRatingColor = (rating) => {
   }
 };
 
+const getRank = (rating) => {
+  if (rating >= 1900) {
+    return 'Candidate Master'; // Adjust this to match your Tailwind CSS class for purple text
+  } else if (rating >= 1600) {
+    return 'Expert'; // Adjust this to match your Tailwind CSS class for blue text
+  } else if (rating >= 1400) {
+    return 'Specialist'; // Adjust this to match your Tailwind CSS class for cyan text
+  } else if (rating >= 1200) {
+    return 'Pupil'; // Adjust this to match your Tailwind CSS class for green text
+  } else {
+    return 'Newbie'; // Adjust this to match your Tailwind CSS class for gray text
+  }
+};
+
+const getDeltaColor = (rating) => {
+  if (rating > 0) {
+    return 'bg-green-700 text-white'; // Adjust this to match your Tailwind CSS class for green text
+  } else {
+    return 'text-black bg-red-400'; // Adjust this to match your Tailwind CSS class for gray text
+  }
+};
+
 // Function to determine submission background color based on verdict
 const getSubmissionClass = (verdict) => {
   switch (verdict) {
@@ -366,6 +479,38 @@ const getSubmissionClass = (verdict) => {
     case 'RUNTIME_ERROR':
     case 'COMPILATION_ERROR':
       return 'bg-red-100';
+    default:
+      return '';
+  }
+};
+
+const getSubmissionResult = (verdict) => {
+  switch (verdict) {
+    case 'OK':
+      return 'AC';
+    case 'TIME_LIMIT_EXCEEDED':
+      return 'TLE';
+    case 'WRONG_ANSWER':
+      return 'WA';
+    case 'RUNTIME_ERROR':
+      return 'RE'
+    case 'COMPILATION_ERROR':
+      return 'CE';
+    default:
+      return '';
+  }
+};
+
+const getSubmissionResultColor = (verdict) => {
+  switch (verdict) {
+    case 'OK':
+      return 'text-green-500';
+    case 'TIME_LIMIT_EXCEEDED':
+      return 'text-red-500';
+    case 'WRONG_ANSWER':
+    case 'RUNTIME_ERROR':
+    case 'COMPILATION_ERROR':
+      return 'text-red-500';
     default:
       return '';
   }
