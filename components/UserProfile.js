@@ -5,7 +5,7 @@ import { Chart as ChartJS,LineElement,  ArcElement, BarElement, CategoryScale, L
 import ReactCountryFlag from "react-country-flag"
 import { getUserInfo, getUserRating, getUserStatus, getProblemset } from '../lib/codeforces';
 import 'chartjs-adapter-date-fns';
-
+import RecommendedProblems from './RecommendedProblems';
 import Swal from 'sweetalert2'
 
 ChartJS.register(BarElement,LineElement, ArcElement, CategoryScale, LinearScale,PointElement, Tooltip, Legend, TimeScale);
@@ -238,38 +238,7 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
     },
   };
 
-  const options = {
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-    plugins: {
-      customBackgroundColor: {
-        id: 'customBackgroundColor',
-        beforeDraw: (chart) => {
-          const { ctx, chartArea: { top, bottom }, scales: { y } } = chart;
-          const gradient = ctx.createLinearGradient(0, top, 0, bottom);
 
-          const colors = [
-            { stop: 0.25, color: 'rgba(255, 99, 132, 0.8)' }, // Red for low ratings
-            { stop: 0.5, color: 'rgba(255, 205, 86, 0.8)' }, // Yellow for medium ratings
-            { stop: 0.75, color: 'rgba(75, 192, 192, 0.8)' }, // Green for high ratings
-            { stop: 1, color: 'rgba(54, 162, 235, 0.8)' }, // Blue for very high ratings
-          ];
-
-          colors.forEach(({ stop, color }) => {
-            gradient.addColorStop(stop, color);
-          });
-
-          ctx.save();
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, top, chart.width, bottom - top);
-          ctx.restore();
-        },
-      },
-    },
-  };
   const difficultyLabels = Object.keys(problemsByDifficulty).sort((a, b) => a - b);
   const difficultyData = difficultyLabels.map(label => problemsByDifficulty[label]);
   
@@ -292,13 +261,13 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
   };
   console.log(ratings);
   
-  // const options = {
-  //   scales: {
-  //     y: {
-  //       beginAtZero: true,
-  //     },
-  //   },
-  // };
+  const options = {
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
   
   if (loading) return <div className="text-center mt-8">Loading...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
@@ -313,7 +282,7 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
         <img src={profile.titlePhoto} alt={`{profile.handle}'s profile photo`} className="w-20 h-20 rounded-full" />
 
       <div className="text-3xl flex gap-4 font-bold mb-4 text-blue-600">
-       <div className='my-auto'>
+       <div className='my-auto pr-0'>
        {profile.firstName != undefined ? ` ${profile.firstName}` : ''}
        {profile.lastName != undefined ? ` ${profile.lastName}` : ''}
        </div>
@@ -333,10 +302,10 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
       {/* {console.log(lookup.byCountry("India").fips)} */}
       </div>
       <p className="mb-2">
-        <strong className="text-lg text-gray-700">Rating:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.rating)} rounded-md`}>{profile.rating}</span>
+        <strong className="text-lg text-gray-700">Rating: <span className={`px-2 py-1 ${getRatingColor(profile.rating)} rounded-md`}>{profile.rating}</span></strong>
       </p>
       <p className="mb-2">
-        <strong className="text-lg text-gray-700">Rank:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.rating)} rounded-md`}>{profile.rank}</span>
+        <strong className="text-lg text-gray-700">Rank: <span className={`px-2 py-1 ${getRatingColor(profile.rating)} rounded-md`}>{profile.rank}</span></strong>
       </p>
       <p className="mb-4">
         <strong className="text-lg text-gray-700">Max Rating:</strong> <span className={`px-2 py-1 ${getRatingColor(profile.maxRating)} rounded-md`}><strong>{profile.maxRating}{` (${getRank(profile.maxRating)}) `}</strong></span>
@@ -358,20 +327,22 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
             </tr>
           </thead>
           <tbody>
-            {ratings.map((rating, index) => (
-              
-              <tr key={index} className="bg-white border-b">
-              <td className="px-4 py-2">
-                  {ratings.length -index}. 
-                  </td>
-                <td className="px-4 py-2">
-                  <a href={`https://codeforces.com/contest/${rating.contestId}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">{rating.contestName}</a>
-                </td>
-                <td className={`px-2 text-center py-2 min-w-xl ${getDeltaColor(rating.newRating-rating.oldRating)}`}><strong>{rating.newRating}
-                {rating.newRating - rating.oldRating > 0 ? ` (+${rating.newRating - rating.oldRating})`: ` (${rating.newRating - rating.oldRating})`}
-                </strong></td>
-              </tr>
-            ))}
+          {/* {console.log(ratings.reverse())} */}
+          {[...ratings].reverse().map((rating, index) => (
+  <tr key={index} className="bg-white border-b">
+    <td className="px-4 py-2">
+      {ratings.length - index}.
+    </td>
+    <td className="px-4 py-2">
+      <a href={`https://codeforces.com/contest/${rating.contestId}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">{rating.contestName}</a>
+    </td>
+    <td className={`px-2 text-center py-2 min-w-xl ${getDeltaColor(rating.newRating - rating.oldRating)}`}>
+      <strong>{rating.newRating}
+        {rating.newRating - rating.oldRating > 0 ? ` (+${rating.newRating - rating.oldRating})` : ` (${rating.newRating - rating.oldRating})`}
+      </strong>
+    </td>
+  </tr>
+))}
           </tbody>
         </table>
       </div>
@@ -405,22 +376,8 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
       <h2 className="text-2xl font-bold mb-4 text-blue-600">Ratings Over Time</h2>
       <Line data={linedata} options={lineoptions} plugins={[lineoptions.plugins.customBackgroundColor]} />
     </div>
-      <div className="mt-6">
-        <h2 className="text-2xl font-bold mb-4 text-blue-600">Recommended Problems</h2>
-        <ul>
-  {problems
-    .filter(problem => problem.rating >= profile.rating && problem.rating <= profile.rating + 200)
-    .slice(0, 10)
-    .map((problem, index) => (
-      <li key={index} className='mb-2 text-md'>
-      <a href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`} target="_blank" rel="noopener noreferrer" className="text-teal-700"> 
-        {problem.name} {problem.rating && `: ${problem.rating}`}
-        </a>
-      </li>
-    ))}
-</ul>
-      </div>
 
+<RecommendedProblems handle={handle} />
 <div className="mt-6">
   <h2 className="text-2xl font-bold mb-4 text-blue-600">Solved Problems by Difficulty</h2>
   <Bar data={data} options={options} />
@@ -433,12 +390,15 @@ const [solvedProblemIds, setsolvedProblemIds] = useState([]);
 
 // Function to determine rating color class based on rating value
 const getRatingColor = (rating) => {
+  if (rating >= 2100) {
+    return 'bg-[#FFA12A]'; // Adjust this to match your Tailwind CSS class for purple text
+  }
   if (rating >= 1900) {
     return 'bg-purple-700 text-white'; // Adjust this to match your Tailwind CSS class for purple text
   } else if (rating >= 1600) {
     return 'bg-blue-700 text-white'; // Adjust this to match your Tailwind CSS class for blue text
   } else if (rating >= 1400) {
-    return 'bg-cyan-700 text-white'; // Adjust this to match your Tailwind CSS class for cyan text
+    return 'bg-cyan-600 text-white'; // Adjust this to match your Tailwind CSS class for cyan text
   } else if (rating >= 1200) {
     return 'bg-green-700 text-white'; // Adjust this to match your Tailwind CSS class for green text
   } else {
@@ -447,6 +407,9 @@ const getRatingColor = (rating) => {
 };
 
 const getRank = (rating) => {
+  if (rating >= 2100) {
+    return 'Master'; // Adjust this to match your Tailwind CSS class for purple text
+  }
   if (rating >= 1900) {
     return 'Candidate Master'; // Adjust this to match your Tailwind CSS class for purple text
   } else if (rating >= 1600) {
