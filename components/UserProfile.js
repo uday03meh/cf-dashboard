@@ -159,13 +159,13 @@ const UserProfile = ({ handle }) => {
               .map((sub) => sub.problem.contestId + sub.problem.index)
           );
           setsolvedProblemIds(SSI);
-          console.log(SSI);
+          // console.log(SSI);
           const userRating = profile?.rating;
           // Fetch problemset
           const { problems } = await getProblemset({ tags: "" }); // Adjust tags as needed
 
           // Filter recommended problems
-          console.log("Problems:", problems);
+          // console.log("Problems:", problems);
           setProblems(problems);
           const recommendedProblems = problems
             .filter(
@@ -179,7 +179,7 @@ const UserProfile = ({ handle }) => {
           setRecommendedProblems(recommendedProblems);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        // console.error("Error fetching data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -362,7 +362,7 @@ const UserProfile = ({ handle }) => {
       },
     ],
   };
-  console.log(ratings);
+  // console.log(ratings);
 
   const options = {
     scales: {

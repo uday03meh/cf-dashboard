@@ -1,12 +1,12 @@
 // app/page.js
 "use client";
-import React, { useState } from 'react';
-import UserProfile from '../components/UserProfile'; // Example import of UserProfile component
+import React, { useState } from "react";
+import UserProfile from "../components/UserProfile"; // Example import of UserProfile component
 
 const Home = () => {
-  const [handle, setHandle] = useState('');
-  const [submittedHandle, setSubmittedHandle] = useState('');
-  const [error, setError] = useState('');
+  const [handle, setHandle] = useState("");
+  const [submittedHandle, setSubmittedHandle] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,12 +14,12 @@ const Home = () => {
       // Simulating fetch data with a delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSubmittedHandle(handle);
-      setError(''); // Clear any previous errors
+      setError(""); // Clear any previous errors
     } catch (error) {
-      console.error('Error fetching user data:', error.message);
-      setError('Invalid handle. Please try again.');
+      console.error("Error fetching user data:", error.message);
+      setError("Invalid handle. Please try again.");
       setTimeout(() => {
-        setError('');
+        setError("");
       }, 2000);
     }
   };
@@ -27,7 +27,9 @@ const Home = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-lg w-full p-6 bg-white rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-center text-blue-600 mb-6">Codeforces Dashboard</h1>
+        <h1 className="text-4xl font-bold text-center text-blue-600 mb-6">
+          Codeforces Dashboard
+        </h1>
         <form onSubmit={handleSubmit} className="text-center">
           <div className="flex items-center justify-center mb-4">
             <input
