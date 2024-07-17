@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Codeforces Dashboard
+
+[![image](https://github.com/user-attachments/assets/c8c9921d-c9e3-4a2b-bee6-0ab6bc795462)](https://codeforces-dashboard.vercel.app/)
+
+## Features
+
+- **Responsive Web Application**: Engineered a responsive web application to visualize Codeforces user data and problem-solving statistics.
+- **Real-Time Data Fetching**: Executed real-time data fetching from the Codeforces API, ensuring up-to-date user information and used charts to represent statistics visually.
+- **Problem Recommendation System**: Formulated a problem recommendation system to suggest problems to users based on their rating, helping them to improve their skills effectively.
+
+## Visit the Dashboard
+
+Check out the live project [here](https://codeforces-dashboard.vercel.app/).
 
 ## Getting Started
 
-First, run the development server:
+To get a local copy up and running, follow these simple steps.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Node.js
+- npm
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/yourusername/codeforces-dashboard.git
+    ```
+2. Navigate to the project directory:
+    ```sh
+    cd codeforces-dashboard
+    ```
+3. Install the dependencies:
+    ```sh
+    npm install
+    ```
 
-## Learn More
+### Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. Start the development server:
+    ```sh
+    npm run dev
+    ```
+2. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Contact
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Uday Mehtani - udaymehtani@gmail.com
